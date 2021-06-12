@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: hello-wold-rest-api-2
+  name: hello-wold-rest-api-2
+  namespace: default
+spec:
+  ports:
+    - nodePort: 30429
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app: hello-wold-rest-api-2
+  sessionAffinity: None
+  type: LoadBalancer
+
+-- 

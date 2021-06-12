@@ -1,0 +1,77 @@
+pipeline {
+	agent any
+
+	environment {
+		myDocker = tool 'myDocker'
+		myMaven = tool 'myMaven'
+		PATH = "$myDocker/bin:$myMaven/bin:$PATH"
+	}
+
+	stages {
+		stage('Checkout') {
+			steps {
+				echo "Build"
+				echo "PATH - $PATH"
+				echo "BUILD NUMBER - $env.BUILD_NUMBER"
+				echo "BUILD ID - $env.BUILD_ID"
+				echo "BUILD JOB NAME - $env.JOB_NAME"
+				echo "BUILD TAG - $env.BUILD_TAG"
+				echo "BUILD URL - $env.BUILD_URL"
+			}
+		}
+
+		stage('Compile') {
+			steps {
+				echo "mvn clean compile"
+			}
+		}
+
+		stage('Test') {
+			steps {
+				echo "mvn test"
+			}
+		}
+
+		stage('Integration Test') {
+			steps {
+				echo "mvn failsafe:integration-test failsafe:verify"
+			}
+		}
+
+		stage('Package') {
+			steps {
+				echo "mvn package -DskipTest"
+			}
+		}
+
+		stage('Build Docker Image') {
+			steps {
+				script {
+					dockerImage = docker.build("davidgarcial/currency-exchange-devops:${env.BUILD_ID}");
+				}
+			}
+		}
+
+		stage('Push Docker Image') {
+			steps {
+				script {
+					docker.withRegistry('', 'dockerHub') {
+						dockerImage.push();
+						dockerImage.push('latest');
+					}
+				}
+			}
+		}
+	}
+	post {
+		always {
+			echo 'Im awesome. I run always'
+		}
+		success {
+			echo 'I run when you are succesfull'
+		}
+		failure {
+			echo 'I run when you are failure'
+		}
+	}
+}
